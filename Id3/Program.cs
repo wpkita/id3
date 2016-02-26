@@ -18,12 +18,12 @@ namespace Id3
             var timer = new Stopwatch();
             timer.Start();
 
-            ReadFromSetupFile("setup.txt");
-            ReadFromTrainFile("train.txt");
+            ReadFromSetupFile("datasets/setup.txt");
+            ReadFromTrainFile("datasets/train.txt");
 
             var tree = new Id3Node(_rows, _attributes, _targetAttribute, 0);
 
-            ReadFromTestFile("test.txt");
+            ReadFromTestFile("datasets/test.txt");
 
             Score(tree, _testRows);
 
