@@ -3,26 +3,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace CSID3
+namespace Id3
 {
-    public class ID3Node
+    public class Id3Node
     {
         private Attribute chosenAttribute;
         private double chosenAttributeThreshold;
-        private Dictionary<double, ID3Node> branches = new Dictionary<double,ID3Node>();
+        private Dictionary<double, Id3Node> branches = new Dictionary<double,Id3Node>();
         private bool isLeaf;
         private double leafLabel;
         static int nodeCount = 0;
         const int MAX_CONT_ATT_USES_PER_TREE = 15;
         int depth;
 
-        public ID3Node(double leafLabel)
+        public Id3Node(double leafLabel)
         {
             isLeaf = true;
             this.leafLabel = leafLabel;
         }
 
-        public ID3Node(List<Row> rows, List<Attribute> attributes, Attribute targetAttribute, int depth)
+        public Id3Node(List<Row> rows, List<Attribute> attributes, Attribute targetAttribute, int depth)
         {
             this.depth = depth;
 
@@ -238,7 +238,7 @@ namespace CSID3
                 {
                     double mostCommonTargetAttributeValue = GetMostCommonTargetAttributeValue(rows, targetAttribute);
 
-                    ID3Node child = new ID3Node(mostCommonTargetAttributeValue);
+                    Id3Node child = new Id3Node(mostCommonTargetAttributeValue);
                     branches[chosenAttributeValue] = child;
                 }
                 else
@@ -256,7 +256,7 @@ namespace CSID3
                     for (int j = 0; j < depth; j++) Console.Write(" ");
                     Console.Write(" {0}->", chosenAttribute.Values[(int)chosenAttributeValue]);
 
-                    ID3Node child = new ID3Node(childRows, childAttributes, targetAttribute, depth + 1);
+                    Id3Node child = new Id3Node(childRows, childAttributes, targetAttribute, depth + 1);
                     branches[chosenAttributeValue] = child;
                 }
             }

@@ -14,7 +14,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 
-namespace CSID3
+namespace Id3
 {
     class Program
     {
@@ -35,7 +35,7 @@ namespace CSID3
             ReadFromSetupFile(String.Format(@"{0}{1}\setup.txt", datasetPath, dataset));
             ReadFromTrainFile(String.Format(@"{0}{1}\train.txt", datasetPath, dataset));
 
-            ID3Node tree = new ID3Node(rows, attributes, targetAttribute, 0);
+            Id3Node tree = new Id3Node(rows, attributes, targetAttribute, 0);
 
             ReadFromTestFile(String.Format(@"{0}{1}\test.txt", datasetPath, dataset));
 
@@ -158,7 +158,7 @@ namespace CSID3
             file.Close();
         }
 
-        static void Score(ID3Node tree, List<Row> testRows)
+        static void Score(Id3Node tree, List<Row> testRows)
         {
             int numRows = testRows.Count;
             int numCorrect = 0;

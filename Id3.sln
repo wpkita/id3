@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSID3", "CSID3\CSID3.csproj", "{B9EFFB74-4441-4ED8-A532-BB7924E07B64}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Id3", "Id3\Id3.csproj", "{B9EFFB74-4441-4ED8-A532-BB7924E07B64}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

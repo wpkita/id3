@@ -8,8 +8,8 @@
     <ProjectGuid>{B9EFFB74-4441-4ED8-A532-BB7924E07B64}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CSID3</RootNamespace>
-    <AssemblyName>CSID3</AssemblyName>
+    <RootNamespace>Id3</RootNamespace>
+    <AssemblyName>Id3</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -44,7 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Attribute.cs" />
-    <Compile Include="ID3Node.cs" />
+    <Compile Include="Id3Node.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Row.cs" />
