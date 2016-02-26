@@ -50,15 +50,9 @@
     <Compile Include="Row.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="setup.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="test.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="train.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <Content Include="datasets\setup.txt" />
+    <Content Include="datasets\test.txt" />
+    <Content Include="datasets\train.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
