@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace Id3
 {
@@ -16,16 +13,14 @@ namespace Id3
 
             if (!isDiscrete)
             {
-                Values = new List<string>();
-                Values.Add("low");
-                Values.Add("high");
+                Values = new List<string> {"low", "high"};
             }
         }
 
         public int ColumnNumber { get; private set; }
         public string Name { get; set; }
         public bool IsDiscrete { get; private set; }
-        public List<string> Values { get; private set; }
+        public List<string> Values { get; }
         public int NumUsesInTree { get; set; }
     }
 }

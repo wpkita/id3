@@ -1,45 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Id3
 {
     public class Id3Node
     {
-        private Attribute chosenAttribute;
-        private double chosenAttributeThreshold;
-        private Dictionary<double, Id3Node> branches = new Dictionary<double,Id3Node>();
-        private bool isLeaf;
-        private double leafLabel;
-        static int nodeCount = 0;
-        const int MAX_CONT_ATT_USES_PER_TREE = 15;
-        int depth;
+        private const int MaxContAttUsesPerTree = 15;
+        private static int _nodeCount;
+        private readonly Dictionary<double, Id3Node> _branches = new Dictionary<double, Id3Node>();
+        private Attribute _chosenAttribute;
+        private double _chosenAttributeThreshold;
+        private readonly int _depth;
+        private readonly bool _isLeaf;
+        private readonly double _leafLabel;
 
         public Id3Node(double leafLabel)
         {
-            isLeaf = true;
-            this.leafLabel = leafLabel;
+            _isLeaf = true;
+            this._leafLabel = leafLabel;
         }
 
         public Id3Node(List<Row> rows, List<Attribute> attributes, Attribute targetAttribute, int depth)
         {
-            this.depth = depth;
+            this._depth = depth;
 
-            Console.WriteLine("{0} to node {1}", rows.Count, nodeCount++);
+            Console.WriteLine("{0} to node {1}", rows.Count, _nodeCount++);
 
-            bool areAllTargetAttributeValuesTheSame = rows.Select(r => r.Values[targetAttribute])
-                                                          .Distinct()
-                                                          .Count() == 1;
+            var areAllTargetAttributeValuesTheSame = rows.Select(r => r.Values[targetAttribute])
+                .Distinct()
+                .Count() == 1;
             if (areAllTargetAttributeValuesTheSame)
             {
-                isLeaf = true;
-                leafLabel = rows.First().Values[targetAttribute];
+                _isLeaf = true;
+                _leafLabel = rows.First().Values[targetAttribute];
             }
             else if (attributes.Count == 0)
             {
-                isLeaf = true;
-                leafLabel = GetMostCommonTargetAttributeValue(rows, targetAttribute);
+                _isLeaf = true;
+                _leafLabel = GetMostCommonTargetAttributeValue(rows, targetAttribute);
             }
             else
             {
@@ -50,31 +49,24 @@ namespace Id3
 
         public double Classify(Row row)
         {
-            double assignedLabel;
-
-            if (isLeaf)
-            {
-                assignedLabel = leafLabel;
-            }
-            else
-            {
-                assignedLabel = branches[GetDiscretizedAttributeValue(row.Values[chosenAttribute])].Classify(row);
-            }
+            var assignedLabel = _isLeaf
+                ? _leafLabel
+                : _branches[GetDiscretizedAttributeValue(row.Values[_chosenAttribute])].Classify(row);
 
             return assignedLabel;
         }
 
-        private void ChooseAttribute(List<Row> rows, List<Attribute> attributes, Attribute targetAttribute)
+        private void ChooseAttribute(List<Row> rows, IEnumerable<Attribute> attributes, Attribute targetAttribute)
         {
-            Dictionary<Attribute, double> attributeGains = new Dictionary<Attribute,double>();
-            Dictionary<Attribute, double> attributeThresholds = new Dictionary<Attribute, double>();
+            var attributeGains = new Dictionary<Attribute, double>();
+            var attributeThresholds = new Dictionary<Attribute, double>();
 
-            double entropyForAllRows = Entropy(rows.GroupBy(r => r.Values[targetAttribute]).Select(g => g.Count()).ToList());
+            var entropyForAllRows = Entropy(rows.GroupBy(r => r.Values[targetAttribute]).Select(g => g.Count()).ToList());
 
             //for (int i = 0; i < depth; i++) Console.Write(" ");
             //Console.WriteLine("ENTROPY:\t{0}", entropyForAllRows);
 
-            foreach (Attribute attribute in attributes)
+            foreach (var attribute in attributes)
             {
                 if (attribute.IsDiscrete)
                 {
@@ -82,35 +74,40 @@ namespace Id3
                 }
                 else
                 {
-                    Tuple<double, double> continuousGainInfo = ContinuousGain(rows, attribute, targetAttribute, entropyForAllRows);
+                    var continuousGainInfo = ContinuousGain(rows, attribute, targetAttribute, entropyForAllRows);
                     attributeGains[attribute] = continuousGainInfo.Item1;
                     attributeThresholds[attribute] = continuousGainInfo.Item2;
                 }
             }
 
-            double highestGain = attributeGains.Values.Max();
-            chosenAttribute = attributeGains.First(ag => ag.Value == highestGain).Key;
+            var highestGain = attributeGains.Values.Max();
+            _chosenAttribute = attributeGains.First(ag => ag.Value == highestGain).Key;
 
-            for (int i = 0; i < depth; i++) Console.Write(" ");
-            Console.WriteLine(":Chose {0}", chosenAttribute.Name);
+            for (var i = 0; i < _depth; i++) Console.Write(" ");
+            Console.WriteLine(":Chose {0}", _chosenAttribute.Name);
 
-            if (!chosenAttribute.IsDiscrete)
+            if (!_chosenAttribute.IsDiscrete)
             {
-                chosenAttributeThreshold = attributeThresholds[chosenAttribute];
+                _chosenAttributeThreshold = attributeThresholds[_chosenAttribute];
             }
         }
 
-        private double DiscreteGain(List<Row> rows, Attribute attribute, Attribute targetAttribute, double entropyForAllRows)
+        private double DiscreteGain(List<Row> rows, Attribute attribute, Attribute targetAttribute,
+            double entropyForAllRows)
         {
-            int numberOfRows = rows.Count;
-            double gain = entropyForAllRows;
+            var numberOfRows = rows.Count;
+            var gain = entropyForAllRows;
 
-            for (int i = 0; i < attribute.Values.Count; i++)
+            for (var i = 0; i < attribute.Values.Count; i++)
             {
-                double attributeValue = (double)i;
+                double attributeValue = i;
                 var rowsWithAttributeValue = rows.Where(r => r.Values[attribute] == attributeValue);
-                int numberOfRowsWithAttributeValue = rowsWithAttributeValue.Count();
-                gain -= (double)numberOfRowsWithAttributeValue / numberOfRows * Entropy(rowsWithAttributeValue.GroupBy(r => r.Values[targetAttribute]).Select(g => g.Count()).ToList());
+                var numberOfRowsWithAttributeValue = rowsWithAttributeValue.Count();
+                gain -= (double) numberOfRowsWithAttributeValue/numberOfRows*
+                        Entropy(
+                            rowsWithAttributeValue.GroupBy(r => r.Values[targetAttribute])
+                                .Select(g => g.Count())
+                                .ToList());
             }
             return gain;
         }
@@ -123,42 +120,44 @@ namespace Id3
          * implementation, combined with using doubles instead of strings in memory,
          * greatly decreased the running time.
          */
-        private Tuple<double, double> ContinuousGain(List<Row> rows, Attribute attribute, Attribute targetAttribute, double entropyForAllRows)
+
+        private static Tuple<double, double> ContinuousGain(ICollection<Row> rows, Attribute attribute,
+            Attribute targetAttribute,
+            double entropyForAllRows)
         {
-            int numRows = rows.Count;
+            var numRows = rows.Count;
 
-            int numBelowThreshold = 0;
-            Dictionary<double, int> numLabelBelowThreshold = new Dictionary<double,int>();
+            var numBelowThreshold = 0;
+            var numLabelBelowThreshold = new Dictionary<double, int>();
 
-            int numAboveThreshold = 0;
-            Dictionary<double, int> numLabelAboveThreshold = new Dictionary<double, int>();
+            var numAboveThreshold = 0;
+            var numLabelAboveThreshold = new Dictionary<double, int>();
 
-            for (int i = 0; i < targetAttribute.Values.Count; i++)
+            for (var i = 0; i < targetAttribute.Values.Count; i++)
             {
-                numLabelBelowThreshold[(double)i] = 0;
-                numLabelAboveThreshold[(double)i] = 0;
+                numLabelBelowThreshold[i] = 0;
+                numLabelAboveThreshold[i] = 0;
             }
 
-            double highestGain = double.MinValue;
+            var highestGain = double.MinValue;
             double thresholdWithHighestGain = 0;
-            bool doesSameAttributeValueHaveDifferentTargetAttributeValues = false;
 
             var rowsOrderedByAttribute = rows.OrderBy(r => r.Values[attribute]).ToList();
-            
-            for (int i = 0; i < rowsOrderedByAttribute.Count; i++)
+
+            foreach (var t in rowsOrderedByAttribute)
             {
                 numAboveThreshold++;
-                numLabelAboveThreshold[rowsOrderedByAttribute[i].Values[targetAttribute]]++;
+                numLabelAboveThreshold[t.Values[targetAttribute]]++;
             }
 
-            for (int i = 0; i < rowsOrderedByAttribute.Count - 1; i++)
+            for (var i = 0; i < rowsOrderedByAttribute.Count - 1; i++)
             {
                 numBelowThreshold++;
                 numLabelBelowThreshold[rowsOrderedByAttribute[i].Values[targetAttribute]]++;
 
                 numAboveThreshold--;
                 numLabelAboveThreshold[rowsOrderedByAttribute[i].Values[targetAttribute]]--;
-                
+
                 /* Since adjacent rows can have the same attribute value,
                  * but not the same target attribute value, we want to wait
                  * until we have reached the last row that contains that
@@ -182,14 +181,13 @@ namespace Id3
                      */
                     //if (rowsOrderedByAttribute[i].Values[targetAttribute] != rowsOrderedByAttribute[i + 1].Values[targetAttribute] || doesSameAttributeValueHaveDifferentTargetAttributeValues)
                     {
-                        doesSameAttributeValueHaveDifferentTargetAttributeValues = false;
+                        var currentThreshold = (rowsOrderedByAttribute[i].Values[attribute] +
+                                                rowsOrderedByAttribute[i + 1].Values[attribute])/2;
 
-                        double currentThreshold = (rowsOrderedByAttribute[i].Values[attribute] + rowsOrderedByAttribute[i + 1].Values[attribute]) / 2;
+                        var gain = entropyForAllRows;
 
-                        double gain = entropyForAllRows;
-
-                        gain -= (double)numBelowThreshold / numRows * Entropy(numLabelBelowThreshold.Values.ToList());
-                        gain -= (double)numAboveThreshold / numRows * Entropy(numLabelAboveThreshold.Values.ToList());
+                        gain -= (double) numBelowThreshold/numRows*Entropy(numLabelBelowThreshold.Values.ToList());
+                        gain -= (double) numAboveThreshold/numRows*Entropy(numLabelAboveThreshold.Values.ToList());
 
                         //Console.WriteLine("Gain\t{0}\t{1}\t{2}", attribute.Name, currentThreshold, gain);
 
@@ -200,26 +198,26 @@ namespace Id3
                         }
                     }
                 }
-                else if (rowsOrderedByAttribute[i].Values[targetAttribute] != rowsOrderedByAttribute[i + 1].Values[targetAttribute])
+                else if (rowsOrderedByAttribute[i].Values[targetAttribute] !=
+                         rowsOrderedByAttribute[i + 1].Values[targetAttribute])
                 {
-                    doesSameAttributeValueHaveDifferentTargetAttributeValues = true;
                 }
             }
 
             return new Tuple<double, double>(highestGain, thresholdWithHighestGain);
         }
 
-        private double Entropy(List<int> labelCounts)
+        private static double Entropy(List<int> labelCounts)
         {
             double entropy = 0;
-            int numCounts = labelCounts.Sum();
+            var numCounts = labelCounts.Sum();
 
-            foreach (int labelCount in labelCounts)
+            foreach (var labelCount in labelCounts)
             {
-                double ratio = (double)labelCount / numCounts;
+                var ratio = (double) labelCount/numCounts;
                 if (ratio != 0)
                 {
-                    entropy -= ratio * Math.Log(ratio, 2.0);
+                    entropy -= ratio*Math.Log(ratio, 2.0);
                 }
             }
 
@@ -228,43 +226,45 @@ namespace Id3
 
         private void GrowBranches(List<Row> rows, List<Attribute> attributes, Attribute targetAttribute)
         {
-            for (int i = 0; i < chosenAttribute.Values.Count; i++)
+            for (var i = 0; i < _chosenAttribute.Values.Count; i++)
             {
-                double chosenAttributeValue = (double)i;
+                double chosenAttributeValue = i;
 
-                List<Row> childRows = rows.Where(r => GetDiscretizedAttributeValue(r.Values[chosenAttribute]) == chosenAttributeValue).ToList();
+                var childRows =
+                    rows.Where(r => GetDiscretizedAttributeValue(r.Values[_chosenAttribute]) == chosenAttributeValue)
+                        .ToList();
 
                 if (childRows.Count == 0)
                 {
-                    double mostCommonTargetAttributeValue = GetMostCommonTargetAttributeValue(rows, targetAttribute);
+                    var mostCommonTargetAttributeValue = GetMostCommonTargetAttributeValue(rows, targetAttribute);
 
-                    Id3Node child = new Id3Node(mostCommonTargetAttributeValue);
-                    branches[chosenAttributeValue] = child;
+                    var child = new Id3Node(mostCommonTargetAttributeValue);
+                    _branches[chosenAttributeValue] = child;
                 }
                 else
                 {
-                    List<Attribute> childAttributes = new List<Attribute>(attributes);
-                    if (chosenAttribute.IsDiscrete || chosenAttribute.NumUsesInTree >= MAX_CONT_ATT_USES_PER_TREE)
+                    var childAttributes = new List<Attribute>(attributes);
+                    if (_chosenAttribute.IsDiscrete || _chosenAttribute.NumUsesInTree >= MaxContAttUsesPerTree)
                     {
-                        childAttributes.Remove(chosenAttribute);
+                        childAttributes.Remove(_chosenAttribute);
                     }
                     else
                     {
-                        chosenAttribute.NumUsesInTree++;
+                        _chosenAttribute.NumUsesInTree++;
                     }
 
-                    for (int j = 0; j < depth; j++) Console.Write(" ");
-                    Console.Write(" {0}->", chosenAttribute.Values[(int)chosenAttributeValue]);
+                    for (var j = 0; j < _depth; j++) Console.Write(" ");
+                    Console.Write(" {0}->", _chosenAttribute.Values[(int) chosenAttributeValue]);
 
-                    Id3Node child = new Id3Node(childRows, childAttributes, targetAttribute, depth + 1);
-                    branches[chosenAttributeValue] = child;
+                    var child = new Id3Node(childRows, childAttributes, targetAttribute, _depth + 1);
+                    _branches[chosenAttributeValue] = child;
                 }
             }
         }
 
-        private double GetMostCommonTargetAttributeValue(List<Row> rows, Attribute targetAttribute)
+        private static double GetMostCommonTargetAttributeValue(IEnumerable<Row> rows, Attribute targetAttribute)
         {
-            double mostCommonTargetAttributeValue = rows.GroupBy(r => r.Values[targetAttribute])
+            var mostCommonTargetAttributeValue = rows.GroupBy(r => r.Values[targetAttribute])
                 .OrderByDescending(g => g.Count())
                 .Select(g => g.Key)
                 .First();
@@ -276,20 +276,13 @@ namespace Id3
         {
             double discretizedAttributeValue;
 
-            if (chosenAttribute.IsDiscrete)
+            if (_chosenAttribute.IsDiscrete)
             {
                 discretizedAttributeValue = attributeValue;
             }
             else
             {
-                if (attributeValue <= chosenAttributeThreshold)
-                {
-                    discretizedAttributeValue = 0.0;
-                }
-                else
-                {
-                    discretizedAttributeValue = 1.0;
-                }
+                discretizedAttributeValue = attributeValue <= _chosenAttributeThreshold ? 0.0 : 1.0;
             }
 
             return discretizedAttributeValue;

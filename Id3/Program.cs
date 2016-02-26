@@ -1,15 +1,4 @@
-﻿/*
- * Only a few things have changed algorithmically since you last saw the code:
- * 1) Using doubles instead of strings for values in memory.
- * 2) The ContinuousGain function in the ID3Node class (further documentation can be found there).
- * 3) Continuous attributes can now be used up to specified number of times in a tree
- *    before being removed from consideration. If I allowed an unlimited number of uses,
- *    I eventually received a StackOverflow error.
- *    
- * To use different datasets, you can change the value of the 'dataset' variable below
- */
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -18,28 +7,25 @@ namespace Id3
 {
     internal class Program
     {
-        private static List<Attribute> attributes;
-        private static List<Row> rows;
-        private static Attribute targetAttribute;
+        private static List<Attribute> _attributes;
+        private static List<Row> _rows;
+        private static Attribute _targetAttribute;
 
-        private static List<Row> testRows;
+        private static List<Row> _testRows;
 
         private static void Main(string[] args)
         {
-            string datasetPath = "";
-            string dataset = ""; // e.g. iris, adult, tennis
-
-            Stopwatch timer = new Stopwatch();
+            var timer = new Stopwatch();
             timer.Start();
 
-            ReadFromSetupFile(String.Format(@"{0}{1}setup.txt", datasetPath, dataset));
-            ReadFromTrainFile(String.Format(@"{0}{1}train.txt", datasetPath, dataset));
+            ReadFromSetupFile("setup.txt");
+            ReadFromTrainFile("train.txt");
 
-            Id3Node tree = new Id3Node(rows, attributes, targetAttribute, 0);
+            var tree = new Id3Node(_rows, _attributes, _targetAttribute, 0);
 
-            ReadFromTestFile(String.Format(@"{0}{1}test.txt", datasetPath, dataset));
+            ReadFromTestFile("test.txt");
 
-            Score(tree, testRows);
+            Score(tree, _testRows);
 
             timer.Stop();
             Console.WriteLine("Time elapsed: {0}.{1}", timer.Elapsed.Seconds, timer.Elapsed.Milliseconds);
@@ -49,24 +35,24 @@ namespace Id3
 
         private static void ReadFromSetupFile(string filePath)
         {
-            attributes = new List<Attribute>();
+            _attributes = new List<Attribute>();
             string line;
 
             // Read the file and display it line by line.
-            StreamReader file = new System.IO.StreamReader(filePath);
+            var file = new StreamReader(filePath);
             while ((line = file.ReadLine()) != null)
             {
-                string[] attributeData = line.Split(',');
+                var attributeData = line.Split(',');
 
-                string attributeName = attributeData[0];
-                int columnNumber = int.Parse(attributeData[1]);
-                bool isTargetAttribute = attributeData[2] != "0";
-                bool isDiscrete = attributeData[3] != "continuous";
-                List<string> attributeValues = new List<string>();
+                var attributeName = attributeData[0];
+                var columnNumber = int.Parse(attributeData[1]);
+                var isTargetAttribute = attributeData[2] != "0";
+                var isDiscrete = attributeData[3] != "continuous";
+                var attributeValues = new List<string>();
 
                 if (isDiscrete)
                 {
-                    for (int i = 3; i < attributeData.Length; i++)
+                    for (var i = 3; i < attributeData.Length; i++)
                     {
                         attributeValues.Add(attributeData[i]);
                     }
@@ -74,12 +60,12 @@ namespace Id3
 
                 if (isTargetAttribute)
                 {
-                    targetAttribute = new Attribute(attributeName, columnNumber, isDiscrete, attributeValues);
+                    _targetAttribute = new Attribute(attributeName, columnNumber, isDiscrete, attributeValues);
                 }
                 else
                 {
-                    Attribute attribute = new Attribute(attributeName, columnNumber, isDiscrete, attributeValues);
-                    attributes.Add(attribute);
+                    var attribute = new Attribute(attributeName, columnNumber, isDiscrete, attributeValues);
+                    _attributes.Add(attribute);
                 }
             }
 
@@ -88,22 +74,22 @@ namespace Id3
 
         private static void ReadFromTrainFile(string filePath)
         {
-            rows = new List<Row>();
+            _rows = new List<Row>();
             string line;
 
             // Read the file and display it line by line.
-            StreamReader file = new System.IO.StreamReader(filePath);
-            while (!String.IsNullOrWhiteSpace(line = file.ReadLine()))
+            var file = new StreamReader(filePath);
+            while (!string.IsNullOrWhiteSpace(line = file.ReadLine()))
             {
-                string[] rowData = line.Split(',');
-                Dictionary<Attribute, double> rowValues = new Dictionary<Attribute, double>();
+                var rowData = line.Split(',');
+                var rowValues = new Dictionary<Attribute, double>();
 
-                foreach (Attribute attribute in attributes)
+                foreach (var attribute in _attributes)
                 {
-                    string rowValue = rowData[attribute.ColumnNumber];
+                    var rowValue = rowData[attribute.ColumnNumber];
                     if (attribute.IsDiscrete)
                     {
-                        rowValues[attribute] = (double) attribute.Values.IndexOf(rowValue);
+                        rowValues[attribute] = attribute.Values.IndexOf(rowValue);
                     }
                     else
                     {
@@ -111,11 +97,11 @@ namespace Id3
                     }
                 }
 
-                string targetAttributeValue = rowData[targetAttribute.ColumnNumber];
-                rowValues[targetAttribute] = (double) targetAttribute.Values.IndexOf(targetAttributeValue);
+                var targetAttributeValue = rowData[_targetAttribute.ColumnNumber];
+                rowValues[_targetAttribute] = _targetAttribute.Values.IndexOf(targetAttributeValue);
 
-                Row row = new Row(rowValues);
-                rows.Add(row);
+                var row = new Row(rowValues);
+                _rows.Add(row);
             }
 
             file.Close();
@@ -123,24 +109,24 @@ namespace Id3
 
         private static void ReadFromTestFile(string filePath)
         {
-            testRows = new List<Row>();
+            _testRows = new List<Row>();
             string line;
 
             // Read the file and display it line by line.
-            StreamReader file = new System.IO.StreamReader(filePath);
-            while (!String.IsNullOrWhiteSpace(line = file.ReadLine()))
+            var file = new StreamReader(filePath);
+            while (!string.IsNullOrWhiteSpace(line = file.ReadLine()))
             {
-                bool hasQuestionMark = false;
-                string[] rowData = line.Split(',');
-                Dictionary<Attribute, double> rowValues = new Dictionary<Attribute, double>();
+                var hasQuestionMark = false;
+                var rowData = line.Split(',');
+                var rowValues = new Dictionary<Attribute, double>();
 
-                foreach (Attribute attribute in attributes)
+                foreach (var attribute in _attributes)
                 {
-                    string rowValue = rowData[attribute.ColumnNumber];
+                    var rowValue = rowData[attribute.ColumnNumber];
                     if (rowValue == "?") hasQuestionMark = true;
                     if (attribute.IsDiscrete)
                     {
-                        rowValues[attribute] = (double) attribute.Values.IndexOf(rowValue);
+                        rowValues[attribute] = attribute.Values.IndexOf(rowValue);
                     }
                     else
                     {
@@ -148,11 +134,11 @@ namespace Id3
                     }
                 }
 
-                string targetAttributeValue = rowData[targetAttribute.ColumnNumber];
-                rowValues[targetAttribute] = (double) targetAttribute.Values.IndexOf(targetAttributeValue);
+                var targetAttributeValue = rowData[_targetAttribute.ColumnNumber];
+                rowValues[_targetAttribute] = _targetAttribute.Values.IndexOf(targetAttributeValue);
 
-                Row row = new Row(rowValues);
-                if (!hasQuestionMark) testRows.Add(row);
+                var row = new Row(rowValues);
+                if (!hasQuestionMark) _testRows.Add(row);
             }
 
             file.Close();
@@ -160,20 +146,20 @@ namespace Id3
 
         private static void Score(Id3Node tree, List<Row> testRows)
         {
-            int numRows = testRows.Count;
-            int numCorrect = 0;
+            var numRows = testRows.Count;
+            var numCorrect = 0;
 
-            foreach (Row row in testRows)
+            foreach (var row in testRows)
             {
-                double assignedLabel = tree.Classify(row);
+                var assignedLabel = tree.Classify(row);
 
-                if (assignedLabel == row.Values[targetAttribute])
+                if (assignedLabel == row.Values[_targetAttribute])
                 {
                     numCorrect++;
                 }
             }
 
-            double percentCorrect = (double) numCorrect/numRows*100;
+            var percentCorrect = (double) numCorrect/numRows*100;
 
             Console.WriteLine("\n{0:00.000}%: {1} out of {2}", percentCorrect, numCorrect, numRows);
         }
