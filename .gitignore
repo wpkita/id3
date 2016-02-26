@@ -1,0 +1,8 @@
+# Sublime
+.sublime
+
+# Visual Studio
+.vs
+bin
+obj
+packages
