@@ -16,38 +16,38 @@ using System.IO;
 
 namespace Id3
 {
-    class Program
+    internal class Program
     {
-        static List<Attribute> attributes;
-        static List<Row> rows;
-        static Attribute targetAttribute;
+        private static List<Attribute> attributes;
+        private static List<Row> rows;
+        private static Attribute targetAttribute;
 
-        static List<Row> testRows;
+        private static List<Row> testRows;
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
-            string datasetPath = @"..\..\..\..\datasets\";
-            string dataset = "adult"; // e.g. iris, adult, tennis
+            string datasetPath = "";
+            string dataset = ""; // e.g. iris, adult, tennis
 
             Stopwatch timer = new Stopwatch();
             timer.Start();
 
-            ReadFromSetupFile(String.Format(@"{0}{1}\setup.txt", datasetPath, dataset));
-            ReadFromTrainFile(String.Format(@"{0}{1}\train.txt", datasetPath, dataset));
+            ReadFromSetupFile(String.Format(@"{0}{1}setup.txt", datasetPath, dataset));
+            ReadFromTrainFile(String.Format(@"{0}{1}train.txt", datasetPath, dataset));
 
             Id3Node tree = new Id3Node(rows, attributes, targetAttribute, 0);
 
-            ReadFromTestFile(String.Format(@"{0}{1}\test.txt", datasetPath, dataset));
+            ReadFromTestFile(String.Format(@"{0}{1}test.txt", datasetPath, dataset));
 
             Score(tree, testRows);
 
             timer.Stop();
             Console.WriteLine("Time elapsed: {0}.{1}", timer.Elapsed.Seconds, timer.Elapsed.Milliseconds);
-            
+
             Console.ReadLine();
         }
 
-        static void ReadFromSetupFile(string filePath)
+        private static void ReadFromSetupFile(string filePath)
         {
             attributes = new List<Attribute>();
             string line;
@@ -86,7 +86,7 @@ namespace Id3
             file.Close();
         }
 
-        static void ReadFromTrainFile(string filePath)
+        private static void ReadFromTrainFile(string filePath)
         {
             rows = new List<Row>();
             string line;
@@ -103,7 +103,7 @@ namespace Id3
                     string rowValue = rowData[attribute.ColumnNumber];
                     if (attribute.IsDiscrete)
                     {
-                        rowValues[attribute] = (double)attribute.Values.IndexOf(rowValue);
+                        rowValues[attribute] = (double) attribute.Values.IndexOf(rowValue);
                     }
                     else
                     {
@@ -112,7 +112,7 @@ namespace Id3
                 }
 
                 string targetAttributeValue = rowData[targetAttribute.ColumnNumber];
-                rowValues[targetAttribute] = (double)targetAttribute.Values.IndexOf(targetAttributeValue);
+                rowValues[targetAttribute] = (double) targetAttribute.Values.IndexOf(targetAttributeValue);
 
                 Row row = new Row(rowValues);
                 rows.Add(row);
@@ -121,7 +121,7 @@ namespace Id3
             file.Close();
         }
 
-        static void ReadFromTestFile(string filePath)
+        private static void ReadFromTestFile(string filePath)
         {
             testRows = new List<Row>();
             string line;
@@ -140,7 +140,7 @@ namespace Id3
                     if (rowValue == "?") hasQuestionMark = true;
                     if (attribute.IsDiscrete)
                     {
-                        rowValues[attribute] = (double)attribute.Values.IndexOf(rowValue);
+                        rowValues[attribute] = (double) attribute.Values.IndexOf(rowValue);
                     }
                     else
                     {
@@ -149,16 +149,16 @@ namespace Id3
                 }
 
                 string targetAttributeValue = rowData[targetAttribute.ColumnNumber];
-                rowValues[targetAttribute] = (double)targetAttribute.Values.IndexOf(targetAttributeValue);
+                rowValues[targetAttribute] = (double) targetAttribute.Values.IndexOf(targetAttributeValue);
 
                 Row row = new Row(rowValues);
-                if (!hasQuestionMark)testRows.Add(row);
+                if (!hasQuestionMark) testRows.Add(row);
             }
 
             file.Close();
         }
 
-        static void Score(Id3Node tree, List<Row> testRows)
+        private static void Score(Id3Node tree, List<Row> testRows)
         {
             int numRows = testRows.Count;
             int numCorrect = 0;
@@ -173,7 +173,7 @@ namespace Id3
                 }
             }
 
-            double percentCorrect = (double)numCorrect / numRows * 100;
+            double percentCorrect = (double) numCorrect/numRows*100;
 
             Console.WriteLine("\n{0:00.000}%: {1} out of {2}", percentCorrect, numCorrect, numRows);
         }

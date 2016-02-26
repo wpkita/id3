@@ -1,0 +1,5 @@
+Outlook,0,1,0
+Temperature,1,1,0
+Humidity,2,1,0
+Wind,3,1,0
+PlayTennis,4,1,1
